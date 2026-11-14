@@ -21,7 +21,7 @@ final class Player: ObservableObject {
                 if launchAtLogin { try SMAppService.mainApp.register() }
                 else { try SMAppService.mainApp.unregister() }
             } catch {
-                NSLog("Drift: launch-at-login change failed: \(error)")
+                NSLog("Hum: launch-at-login change failed: \(error)")
             }
         }
     }
@@ -78,12 +78,24 @@ final class Player: ObservableObject {
             }
         }
 
-        if ProcessInfo.processInfo.environment["DRIFT_SELFTEST"] != nil {
+        // Self-tests for development: HUM_SELFTEST=audio (silent engine check) or =login.
+        switch ProcessInfo.processInfo.environment["HUM_SELFTEST"] {
+        case "audio":
+            synth.volume = 0
             play()
             DispatchQueue.main.asyncAfter(deadline: .now() + 3) { [self] in
-                print("SELFTEST engineRunning=\(engine.isRunning) audible=\(synth.isAudible) sr=\(synth.sampleRate)")
+                print("SELFTEST audio engineRunning=\(engine.isRunning) rendering=\(synth.isAudible) sr=\(synth.sampleRate)")
                 exit(synth.isAudible ? 0 : 1)
             }
+        case "login":
+            let service = SMAppService.mainApp
+            do { try service.register() } catch { print("SELFTEST login register error: \(error)") }
+            print("SELFTEST login after register: \(service.status.rawValue)")
+            do { try service.unregister() } catch { print("SELFTEST login unregister error: \(error)") }
+            print("SELFTEST login after unregister: \(service.status.rawValue)")
+            exit(0)
+        default:
+            break
         }
     }
 
@@ -96,7 +108,7 @@ final class Player: ObservableObject {
         synth.fadeSeconds = 2
         synth.isPlaying = true
         if !engine.isRunning {
-            do { try engine.start() } catch { NSLog("Drift: engine start failed: \(error)"); return }
+            do { try engine.start() } catch { NSLog("Hum: engine start failed: \(error)"); return }
         }
         isPlaying = true
     }

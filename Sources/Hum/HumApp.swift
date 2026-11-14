@@ -1,7 +1,7 @@
 import SwiftUI
 
 @main
-struct DriftApp: App {
+struct HumApp: App {
     @StateObject private var player = Player()
 
     var body: some Scene {
@@ -40,6 +40,7 @@ struct MenuView: View {
                 ForEach(NatureSound.allCases) { n in
                     Chip(symbol: n.symbol, title: nil, selected: player.nature == n) { player.nature = n }
                         .help(n.title)
+                        .accessibilityLabel(n.title)
                 }
             }
 
